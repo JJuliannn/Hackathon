@@ -1,0 +1,161 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+:root {
+  --radius: 0.75rem;
+  /* Background #F8FAFC, white cards */
+  --background: oklch(0.984 0.003 247.858);
+  --foreground: oklch(0.21 0.034 264.665); /* gray-900 */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.034 264.665);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.034 264.665);
+
+  /* Primary indigo #4F46E5 */
+  --primary: oklch(0.514 0.222 277.4);
+  --primary-foreground: oklch(0.99 0.005 250);
+
+  --secondary: oklch(0.968 0.007 247.896);
+  --secondary-foreground: oklch(0.21 0.034 264.665);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.554 0.046 257.417); /* gray-500 */
+  --accent: oklch(0.95 0.02 277);
+  --accent-foreground: oklch(0.21 0.034 264.665);
+
+  /* Status colors */
+  --success: oklch(0.696 0.155 162.5); /* #10B981 */
+  --success-foreground: oklch(0.99 0.005 250);
+  --warning: oklch(0.769 0.166 70.08); /* #F59E0B */
+  --warning-foreground: oklch(0.21 0.034 264.665);
+  --danger: oklch(0.637 0.237 25.331); /* #EF4444 */
+  --danger-foreground: oklch(0.99 0.005 250);
+  --info: oklch(0.623 0.214 259.815); /* #3B82F6 */
+  --info-foreground: oklch(0.99 0.005 250);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--danger-foreground);
+
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.514 0.222 277.4);
+
+  --chart-1: oklch(0.514 0.222 277.4);
+  --chart-2: oklch(0.623 0.214 259.815);
+  --chart-3: oklch(0.696 0.155 162.5);
+  --chart-4: oklch(0.769 0.166 70.08);
+  --chart-5: oklch(0.637 0.237 25.331);
+
+  /* Sidebar — dark navy #1E1B4B */
+  --sidebar: oklch(0.225 0.07 280);
+  --sidebar-foreground: oklch(0.96 0.01 250);
+  --sidebar-primary: oklch(0.62 0.22 277);
+  --sidebar-primary-foreground: oklch(0.99 0.005 250);
+  --sidebar-accent: oklch(0.295 0.08 280);
+  --sidebar-accent-foreground: oklch(0.99 0.005 250);
+  --sidebar-border: oklch(0.35 0.06 280);
+  --sidebar-ring: oklch(0.62 0.22 277);
+
+  --gradient-hero: linear-gradient(135deg, oklch(0.45 0.22 277) 0%, oklch(0.5 0.24 305) 100%);
+  --shadow-card: 0 1px 3px 0 oklch(0 0 0 / 0.05), 0 1px 2px -1px oklch(0 0 0 / 0.05);
+  --shadow-elevated: 0 10px 30px -10px oklch(0.45 0.22 277 / 0.18);
+}
+
+.dark {
+  --background: oklch(0.21 0.034 264.665);
+  --foreground: oklch(0.984 0.003 247.858);
+  --card: oklch(0.27 0.04 265);
+  --card-foreground: oklch(0.984 0.003 247.858);
+  --popover: oklch(0.27 0.04 265);
+  --popover-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.62 0.22 277);
+  --primary-foreground: oklch(0.99 0.005 250);
+  --secondary: oklch(0.279 0.041 260.031);
+  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: oklch(0.32 0.06 277);
+  --accent-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.62 0.22 277);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+}
+
+@keyframes pulse-danger {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.637 0.237 25.331 / 0.5); }
+  50% { box-shadow: 0 0 0 8px oklch(0.637 0.237 25.331 / 0); }
+}
+.animate-pulse-danger { animation: pulse-danger 1.8s ease-in-out infinite; }
+
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up { animation: slide-up-fade 0.4s ease-out both; }
+
+@keyframes confetti-pop {
+  0% { transform: scale(0.9); opacity: 0; }
+  60% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-confetti { animation: confetti-pop 0.5s ease-out both; }
