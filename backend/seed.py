@@ -48,11 +48,11 @@ def seed():
     # ── Patients ──
     patients = [
         ("pat_maria", clinic_id, "María", "López", "+50688110001", "maria@email.com", 8, 1, 0.125),
-        ("pat_ana", clinic_id, "Ana", "Ramírez", "+50688110002", "ana@email.com", 5, 2, 0.4),
+        ("pat_daniel", clinic_id, "Daniel", "Zeas", "+50660487739", "daniel@email.com", 5, 2, 0.4),
         ("pat_carlos", clinic_id, "Carlos", "Mendoza", "+50688110003", "carlos@email.com", 3, 0, 0.0),
         ("pat_laura", clinic_id, "Laura", "Solano", "+50688110004", "laura@email.com", 12, 1, 0.083),
         ("pat_patricia", clinic_id, "Patricia", "Vargas", "+50688110005", "patricia@email.com", 4, 1, 0.25),
-        ("pat_valentina", clinic_id, "Valentina", "Mora", "+50688110006", "valentina@email.com", 2, 0, 0.0),
+        ("pat_julian", clinic_id, "Julián", "Brenes", "+50685414073", "julian@email.com", 2, 0, 0.0),
         ("pat_sofia", clinic_id, "Sofía", "Rojas", "+50688110007", "sofia@email.com", 1, 0, 0.0),
         ("pat_andrea", clinic_id, "Andrea", "Lizano", "+50688110008", "andrea@email.com", 0, 0, 0.0),
     ]
@@ -67,7 +67,7 @@ def seed():
     # ── Appointments (tomorrow) ──
     appts = [
         ("apt_01", clinic_id, "pat_maria", "Botox", f"{tomorrow}T08:00:00", 450, "confirmed", 5),
-        ("apt_02", clinic_id, "pat_ana", "Ácido Hialurónico", f"{tomorrow}T09:00:00", 380, "at_risk", 85),
+        ("apt_02", clinic_id, "pat_daniel", "Ácido Hialurónico", f"{tomorrow}T09:00:00", 380, "scheduled", 0),
         ("apt_03", clinic_id, "pat_carlos", "Botox", f"{tomorrow}T10:00:00", 450, "cancelled", 100),
         ("apt_04", clinic_id, "pat_carlos", "Botox", f"{tomorrow}T11:00:00", 450, "recovered", 0),
         ("apt_05", clinic_id, "pat_laura", "Hilos Tensores", f"{tomorrow}T12:00:00", 600, "confirmed", 10),
@@ -88,11 +88,9 @@ def seed():
         (datetime.now().isoformat(),),
     )
 
-    # Mark apt_02 with no-response
+    # Mark apt_02 as scheduled (Daniel Zeas - will receive reminder)
     c.execute(
-        """UPDATE appointments SET last_patient_message='Sin respuesta hace 6h',
-           confirmation_sent_at=? WHERE id='apt_02'""",
-        ((datetime.now() - timedelta(hours=6)).isoformat(),),
+        """UPDATE appointments SET confirmation_sent_at=NULL WHERE id='apt_02'"""
     )
 
     # Mark apt_04 as recovered
@@ -113,7 +111,7 @@ def seed():
 
     # ── Waitlist entries ──
     waitlist = [
-        (uid(), clinic_id, "pat_valentina", "Botox", "active", 80, 14),
+        (uid(), clinic_id, "pat_julian", "Ácido Hialurónico", "active", 90, 14),
         (uid(), clinic_id, "pat_sofia", "Ácido Hialurónico", "active", 60, 7),
         (uid(), clinic_id, "pat_andrea", "Botox", "active", 40, 3),
     ]
@@ -138,7 +136,7 @@ def seed():
             apt_id = uid()
             status = ["completed", "completed", "completed", "completed", "recovered", "cancelled"][i]
             price = [450, 380, 600, 350, 450, 380][i]
-            pat = ["pat_maria", "pat_ana", "pat_laura", "pat_patricia", "pat_carlos", "pat_ana"][i]
+            pat = ["pat_maria", "pat_daniel", "pat_laura", "pat_patricia", "pat_carlos", "pat_daniel"][i]
             c.execute(
                 """INSERT INTO appointments (id, clinic_id, patient_id, procedure_name, scheduled_at, price, status,
                    cancellation_risk, recovered_from_waitlist)

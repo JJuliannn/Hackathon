@@ -1,4 +1,5 @@
 import os
+import sys
 import uuid
 import json
 from datetime import datetime, timedelta
@@ -13,10 +14,36 @@ from db import get_db
 from ai_engine import analyze_patient_message, analyze_no_response, generate_followup_message
 from kapso_client import send_reminder, send_waitlist_offer, send_post_appointment
 
+
+def log(msg):
+    sys.stderr.write(f"[SlotRecovery] {msg}\n")
+    sys.stderr.flush()
+
+
 app = Flask(__name__)
 CORS(app)
 
 CLINIC_ID = os.getenv("CLINIC_ID", "clinic_demo_001")
+
+log("Backend iniciado")
+
+
+@app.before_request
+def log_every_request():
+    log(f">> {request.method} {request.path}")
+    if request.is_json and request.data:
+        log(f"   Body: {request.get_json()}")
+
+
+@app.after_request
+def log_every_response(response):
+    if response.content_type and "json" in response.content_type:
+        try:
+            log(f"   Response: {response.get_json()}")
+        except Exception:
+            pass
+    log(f"<< {response.status_code}")
+    return response
 
 
 # ──────────────────────────────────────
@@ -212,15 +239,15 @@ def analyze():
 
 @app.route("/api/kapso/citas/estado", methods=["POST"])
 def kapso_appointment_status():
-    secret = request.headers.get("Authorization", "")
-    expected = f"Bearer {os.getenv('KAPSO_WEBHOOK_SECRET', '')}"
-    if secret != expected and os.getenv("KAPSO_WEBHOOK_SECRET"):
+    secret = request.headers.get("X-Webhook-Secret", "")
+    expected = os.getenv("KAPSO_WEBHOOK_SECRET", "")
+    if expected and secret != expected:
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.json
     cita_id = data.get("cita_id")
     estado = data.get("estado")
-    respuesta_texto = data.get("respuesta_texto", "")
+    respuesta_texto = data.get("mensaje_paciente", data.get("respuesta_texto", ""))
 
     if not cita_id or not estado:
         return jsonify({"error": "Missing cita_id or estado"}), 400
@@ -454,8 +481,18 @@ def get_waitlist():
            ORDER BY w.priority_score DESC, w.added_at ASC""",
         (CLINIC_ID,),
     ).fetchall()
+    result = []
+    for r in rows:
+        result.append({
+            "id": r["id"],
+            "name": f"{r['first_name']} {r['last_name'][0]}.",
+            "days_waiting": r["days_waiting"],
+            "priority": r["priority_score"],
+            "status": r["status"],
+            "phone": r["phone"],
+        })
     db.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify(result)
 
 
 # ──────────────────────────────────────
@@ -466,7 +503,7 @@ def get_waitlist():
 def get_commissions():
     db = get_db()
     rows = db.execute(
-        """SELECT c.*, a.procedure_name, p.first_name, p.last_name
+        """SELECT c.*, a.procedure_name, a.scheduled_at, p.first_name, p.last_name
            FROM commissions c
            JOIN appointments a ON c.appointment_id = a.id
            JOIN patients p ON a.patient_id = p.id
@@ -474,8 +511,19 @@ def get_commissions():
            ORDER BY c.earned_at DESC""",
         (CLINIC_ID,),
     ).fetchall()
+    result = []
+    for r in rows:
+        result.append({
+            "id": r["id"],
+            "patient": f"{r['first_name']} {r['last_name'][0]}.",
+            "procedure": r["procedure_name"],
+            "amount": r["treatment_amount"],
+            "commission": r["commission_amount"],
+            "status": r["status"],
+            "date": r["scheduled_at"].split("T")[1][:5] if "T" in (r["scheduled_at"] or "") else r["earned_at"] or "",
+        })
     db.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify(result)
 
 
 # ──────────────────────────────────────
@@ -502,4 +550,4 @@ def projections():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000)
