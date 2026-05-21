@@ -1,4 +1,5 @@
-import { appointments } from "@/data/mock";
+import { appointments as mockAppointments } from "@/data/mock";
+import type { ApiAppointment } from "@/lib/api";
 import { StatusBadge } from "./StatusBadge";
 import { cn } from "@/lib/utils";
 import { usd } from "@/lib/format";
@@ -15,7 +16,9 @@ const statusColor: Record<string, string> = {
   doubtful: "border-warning/50 bg-warning/10",
 };
 
-export function Timeline24h() {
+export function Timeline24h({ appointments: incoming }: { appointments?: ApiAppointment[] } = {}) {
+  const appointments = incoming ?? mockAppointments;
+
   return (
     <div className="rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-card)]">
       <div className="mb-5 flex items-center justify-between">

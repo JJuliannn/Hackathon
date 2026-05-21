@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { TopBar } from "@/components/TopBar";
-import { projections } from "@/data/mock";
+import { projections as mockProjections } from "@/data/mock";
+import { fetchProjections } from "@/lib/api";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { TrendingUp, DollarSign } from "lucide-react";
 
@@ -15,6 +17,13 @@ export const Route = createFileRoute("/_app/proyecciones")({
 });
 
 function ProyeccionesPage() {
+  const [chartData, setChartData] = useState(mockProjections);
+  useEffect(() => {
+    fetchProjections()
+      .then((data) => { if (data?.length) setChartData(data as typeof mockProjections); })
+      .catch(() => {}); // fallback al mock silenciosamente
+  }, []);
+
   return (
     <div>
       <TopBar />
@@ -27,7 +36,7 @@ function ProyeccionesPage() {
           <p className="mt-1 text-sm text-muted-foreground">El caso de negocio para inversionistas.</p>
         </header>
 
-        {/* Modelo de ingresos */}
+        {/* Modelo de ingresos — comisión actualizada a 10% */}
         <section className="rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-card)]">
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-primary" />
@@ -35,8 +44,8 @@ function ProyeccionesPage() {
           </div>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             <Pillar label="SaaS Base" value="$99 / mes" sub="por clínica" />
-            <Pillar label="Comisión de éxito" value="5%" sub="~$20 por cita de $400" />
-            <Pillar label="Ingreso promedio" value="$279 / mes" sub="por clínica" highlight />
+            <Pillar label="Comisión de éxito" value="10%" sub="~$40 por cita de $400" />
+            <Pillar label="Ingreso promedio" value="$459 / mes" sub="por clínica" highlight />
           </div>
         </section>
 
@@ -54,34 +63,30 @@ function ProyeccionesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                <Row label="Clínicas activas" m3="15" m6="60" y1="200" />
-                <Row label="Citas recuperadas / mes" m3="135" m6="540" y1="1,800" />
-                <Row label="Revenue salvado (clínicas)" m3="$54,000" m6="$216,000" y1="$720,000" />
-                <Row label="Ingreso SlotRecovery / mes" m3="$4,185" m6="$16,740" y1="$55,800" />
-                <Row label="Ingreso anual" m3="—" m6="—" y1="$669,600" bold />
+                <Row label="Clínicas activas"            m3="15"       m6="60"        y1="200" />
+                <Row label="Citas recuperadas / mes"     m3="135"      m6="540"       y1="1,800" />
+                <Row label="Revenue salvado (clínicas)"  m3="$54,000"  m6="$216,000"  y1="$720,000" />
+                <Row label="Ingreso SlotRecovery / mes"  m3="$6,885"   m6="$27,540"   y1="$91,800" />
+                <Row label="Ingreso anual"               m3="—"        m6="—"         y1="$1,101,600" bold />
               </tbody>
             </table>
           </div>
         </section>
 
-        {/* Chart */}
+        {/* Chart con datos reales o mock */}
         <section className="rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-card)]">
           <h3 className="text-base font-semibold text-foreground">Revenue mensual proyectado — Año 1</h3>
-          <p className="text-xs text-muted-foreground">Ingresos SlotRecovery (SaaS + comisión)</p>
+          <p className="text-xs text-muted-foreground">Ingresos SlotRecovery (SaaS + comisión 10%)</p>
           <div className="mt-6 h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={projections} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false}
+                  tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
                 <Tooltip
                   cursor={{ fill: "var(--accent)", opacity: 0.3 }}
-                  contentStyle={{
-                    background: "var(--card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 12,
-                    fontSize: 12,
-                  }}
+                  contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12, fontSize: 12 }}
                   formatter={(v: number) => [`$${v.toLocaleString()}`, "Revenue"]}
                 />
                 <Bar dataKey="revenue" fill="var(--primary)" radius={[8, 8, 0, 0]} />
@@ -90,7 +95,7 @@ function ProyeccionesPage() {
           </div>
         </section>
 
-        {/* Margin */}
+        {/* Margen */}
         <section className="rounded-2xl border-2 border-primary/30 bg-primary/5 p-6 shadow-[var(--shadow-elevated)]">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
@@ -98,20 +103,22 @@ function ProyeccionesPage() {
             </div>
             <div>
               <div className="text-xs uppercase tracking-wider text-primary">Margen operativo</div>
-              <div className="text-3xl font-bold text-foreground tabular-nums">85%</div>
+              <div className="text-3xl font-bold tabular-nums text-foreground">85%</div>
               <div className="text-sm text-muted-foreground">El costo de procesar cada mensaje con IA es &lt; $0.01</div>
             </div>
           </div>
         </section>
 
-        {/* Quote */}
+        {/* Quote — actualizado con 10% */}
         <section className="rounded-2xl bg-foreground p-8 text-background">
           <blockquote className="text-xl font-medium leading-relaxed md:text-2xl">
-            &ldquo;Una clínica paga <span className="text-primary">$279/mes</span> y recupera{" "}
-            <span className="text-success">$3,600</span> en citas perdidas. ROI: <span className="font-bold">13x</span>.
-            No somos un gasto, somos una fuente de ingresos.&rdquo;
+            &ldquo;Una clínica paga <span className="text-primary">$459/mes</span> y recupera{" "}
+            <span className="text-success">$3,600</span> en citas perdidas. ROI:{" "}
+            <span className="font-bold">8x</span>. No somos un gasto, somos una fuente de ingresos.&rdquo;
           </blockquote>
-          <div className="mt-4 text-xs uppercase tracking-wider text-background/60">SlotRecovery AI · Pitch a inversionistas</div>
+          <div className="mt-4 text-xs uppercase tracking-wider text-background/60">
+            SlotRecovery AI · Pitch a inversionistas
+          </div>
         </section>
       </div>
     </div>

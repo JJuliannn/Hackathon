@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { TopBar } from "@/components/TopBar";
 import { ChatBubble } from "@/components/ChatBubble";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ClipboardCheck, Receipt, MessageCircle, CheckCircle2, AlertTriangle } from "lucide-react";
+import { fetchCommissions, type CommissionItem } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/post-cita")({
   head: () => ({
@@ -15,6 +17,20 @@ export const Route = createFileRoute("/_app/post-cita")({
 });
 
 function PostCitaPage() {
+  const [commissions, setCommissions] = useState<CommissionItem[]>([]);
+
+  useEffect(() => {
+    fetchCommissions()
+      .then(setCommissions)
+      .catch(() => setCommissions([]));
+  }, []);
+
+  // Si el backend devuelve datos los usamos, si no mostramos el contenido original
+  const hasData = commissions.length > 0;
+  const totalBilled     = hasData ? commissions.reduce((s, c) => s + c.amount, 0) : 830;
+  const totalCommission = hasData ? commissions.reduce((s, c) => s + c.commission, 0) : 41.50;
+  const roi             = hasData ? Math.round(totalBilled / totalCommission) : 20;
+
   return (
     <div>
       <TopBar />
@@ -44,34 +60,51 @@ function PostCitaPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell className="font-medium">Carlos M.</TableCell>
-                  <TableCell>Botox</TableCell>
-                  <TableCell className="tabular-nums">11:00 AM</TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
-                      <CheckCircle2 className="h-3 w-3" /> Asistió
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right font-semibold tabular-nums">$450</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">Sofía R.</TableCell>
-                  <TableCell>Ác. Hialurónico</TableCell>
-                  <TableCell className="tabular-nums">9:00 AM</TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
-                      <CheckCircle2 className="h-3 w-3" /> Asistió
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right font-semibold tabular-nums">$380</TableCell>
-                </TableRow>
+                {hasData ? commissions.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.patient}</TableCell>
+                    <TableCell>{item.procedure}</TableCell>
+                    <TableCell className="tabular-nums">{item.date}</TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
+                        <CheckCircle2 className="h-3 w-3" /> Asistió
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right font-semibold tabular-nums">${item.amount}</TableCell>
+                  </TableRow>
+                )) : (
+                  <>
+                    <TableRow>
+                      <TableCell className="font-medium">Carlos M.</TableCell>
+                      <TableCell>Botox</TableCell>
+                      <TableCell className="tabular-nums">11:00 AM</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
+                          <CheckCircle2 className="h-3 w-3" /> Asistió
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums">$450</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">Sofía R.</TableCell>
+                      <TableCell>Ác. Hialurónico</TableCell>
+                      <TableCell className="tabular-nums">9:00 AM</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
+                          <CheckCircle2 className="h-3 w-3" /> Asistió
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums">$380</TableCell>
+                    </TableRow>
+                  </>
+                )}
               </TableBody>
             </Table>
           </div>
 
           <div className="mt-4 rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-sm font-medium text-success">
-            2 citas recuperadas hoy = <span className="font-bold">$830 salvados</span>
+            {hasData ? commissions.length : 2} citas recuperadas hoy ={" "}
+            <span className="font-bold">${totalBilled} salvados</span>
           </div>
         </section>
 
@@ -92,23 +125,37 @@ function PostCitaPage() {
             </div>
 
             <div className="mt-3 space-y-2 text-sm">
-              <LineItem desc="Cita recuperada: Carlos M. (Botox $450)" calc="Comisión 5%" amount="$22.50" />
-              <LineItem desc="Cita recuperada: Sofía R. (Ác. Hialurónico $380)" calc="Comisión 5%" amount="$19.00" />
+              {hasData ? commissions.map((item) => (
+                <LineItem
+                  key={item.id}
+                  desc={`Cita recuperada: ${item.patient} (${item.procedure} $${item.amount})`}
+                  calc={`Comisión ${Math.round((item.commission / item.amount) * 100)}%`}
+                  amount={`$${item.commission.toFixed(2)}`}
+                />
+              )) : (
+                <>
+                  <LineItem desc="Cita recuperada: Carlos M. (Botox $450)" calc="Comisión 5%" amount="$22.50" />
+                  <LineItem desc="Cita recuperada: Sofía R. (Ác. Hialurónico $380)" calc="Comisión 5%" amount="$19.00" />
+                </>
+              )}
             </div>
 
             <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
               <div className="text-sm font-medium text-muted-foreground">Total</div>
-              <div className="text-2xl font-bold tabular-nums text-foreground">$41.50</div>
+              <div className="text-2xl font-bold tabular-nums text-foreground">
+                ${totalCommission.toFixed(2)}
+              </div>
             </div>
 
             <div className="mt-4 rounded-lg bg-primary/10 px-4 py-3 text-sm text-primary">
-              💡 La clínica ganó <strong>$830</strong>, SlotRecovery cobró <strong>$41.50</strong> —{" "}
-              <span className="font-bold">ROI: 20x</span>
+              💡 La clínica ganó <strong>${totalBilled}</strong>, SlotRecovery cobró{" "}
+              <strong>${totalCommission.toFixed(2)}</strong> —{" "}
+              <span className="font-bold">ROI: {roi}x</span>
             </div>
           </div>
         </section>
 
-        {/* Seguimiento 24h */}
+        {/* Seguimiento 24h — sin cambios */}
         <section className="rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-card)]">
           <div className="flex items-center gap-2">
             <MessageCircle className="h-4 w-4 text-info" />

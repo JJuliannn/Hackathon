@@ -1,10 +1,13 @@
-import { alerts } from "@/data/mock";
+import { alerts as mockAlerts } from "@/data/mock";
+import type { ApiAlert } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, ShieldAlert } from "lucide-react";
 import { usd } from "@/lib/format";
 
-export function AlertsPanel() {
+export function AlertsPanel({ alerts: incoming }: { alerts?: ApiAlert[] } = {}) {
+  const alerts = incoming ?? mockAlerts;
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
       <div className="mb-4 flex items-center justify-between">
@@ -45,7 +48,7 @@ export function AlertsPanel() {
                     )}>
                       Riesgo: {a.risk}%
                     </span>
-                    <Button size="sm" variant={isDanger ? "default" : "outline"} className={isDanger ? "" : ""}>
+                    <Button size="sm" variant={isDanger ? "default" : "outline"}>
                       {a.cta}
                     </Button>
                   </div>

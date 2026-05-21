@@ -4,46 +4,47 @@ import { cn } from "@/lib/utils";
 import { ChatBubble } from "./ChatBubble";
 import { CheckCircle2, Clock, RotateCcw, Sparkles, XCircle } from "lucide-react";
 import { usd } from "@/lib/format";
+import type { WaitlistCandidate } from "@/lib/api";
 
 type CandidateState = "queued" | "notified" | "no-response" | "confirmed";
-type State = {
-  step: number; // 0..4
-  cands: CandidateState[];
-};
+type State = { step: number; cands: CandidateState[] };
 
 const initial: State = { step: 0, cands: ["queued", "queued", "queued"] };
 
 function reducer(s: State, a: { type: "tick" } | { type: "reset" }): State {
   if (a.type === "reset") return initial;
   switch (s.step) {
-    case 0:
-      return { step: 1, cands: ["notified", "notified", "queued"] };
-    case 1:
-      return { step: 2, cands: ["no-response", "notified", "queued"] };
-    case 2:
-      return { step: 3, cands: ["no-response", "confirmed", "queued"] };
-    case 3:
-      return { step: 4, cands: s.cands };
-    default:
-      return s;
+    case 0: return { step: 1, cands: ["notified", "notified", "queued"] };
+    case 1: return { step: 2, cands: ["no-response", "notified", "queued"] };
+    case 2: return { step: 3, cands: ["no-response", "confirmed", "queued"] };
+    case 3: return { step: 4, cands: s.cands };
+    default: return s;
   }
 }
 
-const candidates = [
+const fallbackCandidates = [
   { name: "Valentina M.", wait: "En espera hace 2 semanas" },
-  { name: "Sofía R.", wait: "En espera hace 1 semana" },
-  { name: "Andrea L.", wait: "En espera hace 3 días" },
+  { name: "Sofía R.",     wait: "En espera hace 1 semana" },
+  { name: "Andrea L.",   wait: "En espera hace 3 días" },
 ];
 
 const timeline = [
-  { t: "0 min", text: "Espacio liberado", tone: "danger" as const, icon: XCircle },
-  { t: "3 min", text: "Valentina M. — no responde", tone: "muted" as const, icon: Clock },
-  { t: "7 min", text: "Sofía R. responde: ¡SÍ! 🎉", tone: "success" as const, icon: CheckCircle2 },
-  { t: "7 min", text: "Espacio RECUPERADO", tone: "info" as const, icon: Sparkles },
+  { t: "0 min", text: "Espacio liberado",              tone: "danger"  as const, icon: XCircle },
+  { t: "3 min", text: "Valentina M. — no responde",    tone: "muted"   as const, icon: Clock },
+  { t: "7 min", text: "Sofía R. responde: ¡SÍ! 🎉",   tone: "success" as const, icon: CheckCircle2 },
+  { t: "7 min", text: "Espacio RECUPERADO",             tone: "info"    as const, icon: Sparkles },
 ];
 
-export function WaitlistSimulation() {
+export function WaitlistSimulation({ candidates: incoming }: { candidates?: WaitlistCandidate[] } = {}) {
   const [s, dispatch] = useReducer(reducer, initial);
+
+  // Mapear datos del backend al formato interno, o usar fallback
+  const candidates = incoming && incoming.length > 0
+    ? incoming.slice(0, 3).map(c => ({
+        name: c.name,
+        wait: `En espera hace ${c.days_waiting} día${c.days_waiting !== 1 ? "s" : ""}`,
+      }))
+    : fallbackCandidates;
 
   useEffect(() => {
     if (s.step >= 4) return;
@@ -54,7 +55,7 @@ export function WaitlistSimulation() {
 
   return (
     <div className="space-y-6">
-      {/* Liberated slot */}
+      {/* Espacio liberado */}
       <div className="flex items-center justify-between rounded-2xl border-2 border-danger/40 bg-danger/5 p-5">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wider text-danger">🔴 Espacio liberado</div>
@@ -68,7 +69,7 @@ export function WaitlistSimulation() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        {/* Candidates */}
+        {/* Candidatas */}
         <div className="space-y-3">
           <div className="text-sm font-medium text-muted-foreground">Notificando lista de espera…</div>
           {candidates.map((c, i) => (
@@ -81,24 +82,17 @@ export function WaitlistSimulation() {
           <div className="text-sm font-semibold text-foreground">Línea de tiempo</div>
           <ol className="mt-4 space-y-4">
             {timeline.map((t, i) => {
-              const visible = s.step > i || (s.step === i);
+              const visible = s.step > i || s.step === i;
               const reached = s.step > i || (s.step === 4 && i <= 3);
               const Icon = t.icon;
               const tone = {
-                danger: "bg-danger/15 text-danger",
+                danger:  "bg-danger/15 text-danger",
                 success: "bg-success/15 text-success",
-                info: "bg-info/15 text-info",
-                muted: "bg-muted text-muted-foreground",
+                info:    "bg-info/15 text-info",
+                muted:   "bg-muted text-muted-foreground",
               }[t.tone];
               return (
-                <li
-                  key={i}
-                  className={cn(
-                    "flex items-start gap-3 transition-opacity",
-                    reached ? "opacity-100" : "opacity-30",
-                    visible && "animate-slide-up",
-                  )}
-                >
+                <li key={i} className={cn("flex items-start gap-3 transition-opacity", reached ? "opacity-100" : "opacity-30", visible && "animate-slide-up")}>
                   <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", tone)}>
                     <Icon className="h-4 w-4" />
                   </div>
@@ -113,7 +107,7 @@ export function WaitlistSimulation() {
         </div>
       </div>
 
-      {/* Success */}
+      {/* Éxito */}
       {s.step >= 4 && (
         <div className="animate-confetti rounded-2xl border-2 border-info/40 bg-info/5 p-6">
           <div className="flex items-center gap-2 text-info">
@@ -143,31 +137,16 @@ export function WaitlistSimulation() {
   );
 }
 
-function CandidateCard({
-  name,
-  wait,
-  state,
-  priority,
-}: {
-  name: string;
-  wait: string;
-  state: CandidateState;
-  priority: number;
-}) {
+function CandidateCard({ name, wait, state, priority }: { name: string; wait: string; state: CandidateState; priority: number }) {
   const status = {
-    queued: { label: "En cola — se notifica si las primeras no responden", cls: "text-muted-foreground", dot: "bg-muted-foreground/40" },
-    notified: { label: "Notificada ✅ — Esperando respuesta…", cls: "text-info", dot: "bg-info animate-pulse" },
-    "no-response": { label: "Sin respuesta", cls: "text-muted-foreground line-through", dot: "bg-muted-foreground/40" },
-    confirmed: { label: "¡Confirmada! 🎉", cls: "text-success font-semibold", dot: "bg-success" },
+    queued:        { label: "En cola — se notifica si las primeras no responden", cls: "text-muted-foreground",               dot: "bg-muted-foreground/40" },
+    notified:      { label: "Notificada ✅ — Esperando respuesta…",               cls: "text-info",                           dot: "bg-info animate-pulse" },
+    "no-response": { label: "Sin respuesta",                                       cls: "text-muted-foreground line-through",  dot: "bg-muted-foreground/40" },
+    confirmed:     { label: "¡Confirmada! 🎉",                                     cls: "text-success font-semibold",          dot: "bg-success" },
   }[state];
 
   return (
-    <div
-      className={cn(
-        "rounded-xl border bg-card p-4 transition-all",
-        state === "confirmed" ? "border-success/40 bg-success/5 shadow-[var(--shadow-elevated)]" : "border-border",
-      )}
-    >
+    <div className={cn("rounded-xl border bg-card p-4 transition-all", state === "confirmed" ? "border-success/40 bg-success/5 shadow-[var(--shadow-elevated)]" : "border-border")}>
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
           {priority}
